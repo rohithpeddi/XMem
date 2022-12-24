@@ -15,6 +15,7 @@ from model.network import XMem
 from inference.inference_core import InferenceCore
 
 from progressbar import progressbar
+from matplotlib import pyplot as plt
 
 try:
     import hickle as hkl
@@ -220,6 +221,16 @@ for vid_reader in progressbar(meta_loader, max_value=len(meta_dataset), redirect
             # Probability mask -> index mask
             out_mask = torch.argmax(prob, dim=0)
             out_mask = (out_mask.detach().cpu().numpy()).astype(np.uint8)
+            
+            fig = plt.figure()
+            ax = fig.add_subplot(1, 2, 1)
+            im = data['rgb'][0].cpu().numpy()
+            im = im.transpose(1, 2, 0)
+            plt.imshow(im)
+            ax = fig.add_subplot(1, 2, 2)
+            plt.imshow(out_mask)
+            plt.show()
+            
 
             if args.save_scores:
                 prob = (prob.detach().cpu().numpy()*255).astype(np.uint8)
