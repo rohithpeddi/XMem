@@ -43,23 +43,10 @@ network = XMem(config, './saves/XMem.pth').eval().to(device)
 video_name = 'video.avi'
 mask_name = '00.pred.png'
 
-masked_image = np.array(Image.open(mask_name))
-w, h, d = masked_image.shape
-image_data = np.reshape(masked_image, (w * h, d))
-
-mask = np.zeros(w*h)
-
-mask_counter = 0
-color_dict = {}
-for i in range(w*h):
-    if str(image_data[i]) not in color_dict:
-        color_dict[str(image_data[i])] = mask_counter
-        mask_counter += 1
-    mask[i] = color_dict[str(image_data[i])]
-
+mask = np.array(Image.open(mask_name))
 print(np.unique(mask))
 num_objects = len(np.unique(mask)) - 1
-mask = np.reshape(mask, (w, h))
+
 
 import cv2
 from inference.interact.interactive_utils import image_to_torch, index_numpy_to_one_hot_torch, torch_prob_to_numpy_mask, overlay_davis
@@ -72,7 +59,7 @@ cap = cv2.VideoCapture(video_name)
 
 # You can change these two numbers
 frames_to_propagate = 200
-visualize_every = 1
+visualize_every = 20
 
 current_frame_index = 0
 
@@ -100,9 +87,6 @@ with torch.cuda.amp.autocast(enabled=True):
     if current_frame_index % visualize_every == 0:
         visualization = overlay_davis(frame, prediction)
         masked_image = Image.fromarray(visualization)
-        masked_image.save('/home/rxp190007/DATA/LFD/JAN/0104T143832/masked-%06d.jpg' % current_frame_index)
-
-        label_image = Image.fromarray(prediction)
-        label_image.save('/home/rxp190007/DATA/LFD/JAN/0104T143832/label-%06d.png' % current_frame_index)
+        masked_image.save("{}.jpg".format(current_frame_index))
 
     current_frame_index += 1
