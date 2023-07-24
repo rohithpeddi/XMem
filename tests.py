@@ -40,11 +40,36 @@ config = {
 
 network = XMem(config, './saves/XMem.pth').eval().to(device)
 
-video_name = 'video.avi'
+# video_name = 'video_sample.mp4'
+# mask_name = 'first_frame_sample.png'
+
+video_name = 'original_video.mp4'
 mask_name = '00.pred.png'
 
 mask = np.array(Image.open(mask_name))
 print(np.unique(mask))
+
+copy_mask = np.copy(mask)
+w, h, d = copy_mask.shape
+
+copy_mask = copy_mask.reshape((w * h, d))
+
+mask_dict = {}
+mask_idx = 0
+for i in range(w*h):
+    if str(copy_mask[i]) in mask_dict:
+        continue
+    else:
+        mask_dict[str(copy_mask[i])] = mask_idx
+        mask_idx += 1
+
+new_mask = np.zeros(w*h)
+for i in range(w*h):
+    new_mask[i] = mask_dict[str(copy_mask[i])]
+    
+mask = new_mask.reshape((w, h))
+print(np.unique(mask))
+
 num_objects = len(np.unique(mask)) - 1
 
 
@@ -59,7 +84,7 @@ cap = cv2.VideoCapture(video_name)
 
 # You can change these two numbers
 frames_to_propagate = 200
-visualize_every = 20
+visualize_every = 1
 
 current_frame_index = 0
 
@@ -85,8 +110,9 @@ with torch.cuda.amp.autocast(enabled=True):
     prediction = torch_prob_to_numpy_mask(prediction)
 
     if current_frame_index % visualize_every == 0:
-        visualization = overlay_davis(frame, prediction)
-        masked_image = Image.fromarray(visualization)
+        visualization = overlay_davis(frame, prediction, alpha=0.2)
+        rgb_visualization = cv2.cvtColor(visualization, cv2.COLOR_BGR2RGB)
+        masked_image = Image.fromarray(rgb_visualization)
         masked_image.save("{}.jpg".format(current_frame_index))
 
     current_frame_index += 1
